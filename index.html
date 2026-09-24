@@ -1,0 +1,844 @@
+<title>Реактивы и изомеры</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#EEF1F0; --surface:#FFFFFF; --surface-2:#F6F8F7;
+    --ink:#14201D; --muted:#63756F; --line:#D3DBD8;
+    --accent:#0C6B86; --accent-soft:#E2EFF3; --on-accent:#FFFFFF;
+    --brown:#9E5426; --crimson:#A81F57; --good:#1F7A5C;
+    --glass:rgba(12,107,134,.10); --sheen:rgba(255,255,255,.45);
+    --serif:"IBM Plex Serif",Georgia,serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#0F1513; --surface:#171F1C; --surface-2:#1E2724;
+      --ink:#E6EDEA; --muted:#8DA09A; --line:#2A3531;
+      --accent:#49BDD8; --accent-soft:#12303A; --on-accent:#07191F;
+      --brown:#CE8148; --crimson:#E4649A; --good:#46C296;
+      --glass:rgba(73,189,216,.12); --sheen:rgba(255,255,255,.14);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0F1513; --surface:#171F1C; --surface-2:#1E2724;
+    --ink:#E6EDEA; --muted:#8DA09A; --line:#2A3531;
+    --accent:#49BDD8; --accent-soft:#12303A; --on-accent:#07191F;
+    --brown:#CE8148; --crimson:#E4649A; --good:#46C296;
+    --glass:rgba(73,189,216,.12); --sheen:rgba(255,255,255,.14);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.5;
+    padding-inline:16px; padding-block:0;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding-block:28px 56px}
+
+  /* ── шапка ── */
+  header.top{display:flex; flex-wrap:wrap; gap:18px 24px; align-items:flex-end; justify-content:space-between; margin-bottom:22px}
+  h1{font-family:var(--serif); font-weight:600; font-size:clamp(28px,4.4vw,40px); line-height:1.08; margin:0; text-wrap:balance; letter-spacing:-.01em}
+  .sub{color:var(--muted); font-size:14px; margin:8px 0 0; max-width:54ch}
+  .eyebrow{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); font-weight:600; margin:0 0 6px}
+
+  .tabs{display:flex; gap:0; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:var(--surface); flex-shrink:0}
+  .tabs button{
+    font:inherit; font-weight:600; font-size:13px; letter-spacing:.02em;
+    padding:11px 20px; border:0; background:transparent; color:var(--muted); cursor:pointer;
+    border-right:1px solid var(--line);
+  }
+  .tabs button:last-child{border-right:0}
+  .tabs button[aria-selected="true"]{background:var(--accent); color:var(--on-accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+
+  /* ── общие блоки ── */
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:4px}
+  .panel-hd{padding:12px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .panel-hd h2{margin:0; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  .count{font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:500}
+
+  /* ── вкладка: лаборатория ── */
+  .lab{display:grid; grid-template-columns:270px minmax(0,1fr) 340px; gap:16px; align-items:start}
+  @media (max-width:1040px){ .lab{grid-template-columns:1fr 1fr} .bench{grid-column:1/-1; order:-1} }
+  @media (max-width:680px){ .lab{grid-template-columns:1fr} }
+
+  .shelf{padding:10px; display:flex; flex-direction:column; gap:6px}
+  .bottle{
+    display:grid; grid-template-columns:8px 1fr auto; gap:11px; align-items:center;
+    padding:9px 11px 9px 0; border:1px solid var(--line); border-radius:3px;
+    background:var(--surface-2); cursor:pointer; text-align:left; font:inherit; color:inherit;
+    transition:border-color .12s, transform .12s;
+  }
+  .bottle:hover{border-color:var(--accent)}
+  .bottle:active{transform:translateY(1px)}
+  .bottle:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .bottle[data-on="1"]{border-color:var(--accent); background:var(--accent-soft)}
+  .bottle .swatch{width:8px; align-self:stretch; border-radius:3px 0 0 3px}
+  .bottle .f{font-family:var(--mono); font-size:14px; font-weight:500; line-height:1.25}
+  .bottle .n{font-size:11.5px; color:var(--muted); line-height:1.3}
+  .bottle .slot{font-family:var(--mono); font-size:10px; font-weight:500; color:var(--accent); padding-right:4px}
+
+  .bench{padding:20px 16px 22px; display:flex; flex-direction:column; align-items:center; gap:16px}
+  .picked{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px; min-height:26px; flex-wrap:wrap; justify-content:center}
+  .picked .plus{color:var(--muted)}
+  .picked .empty{color:var(--muted); font-family:var(--sans); font-size:13px}
+
+  .tube{
+    position:relative; width:112px; height:238px; flex-shrink:0;
+    border:3px solid var(--line); border-top:0; border-radius:0 0 56px 56px;
+    background:linear-gradient(105deg, var(--glass), transparent 42%);
+    overflow:hidden;
+  }
+  .tube::after{content:""; position:absolute; inset:0; border-radius:0 0 54px 54px; pointer-events:none;
+    background:linear-gradient(100deg, var(--sheen) 0 9%, transparent 16%)}
+  .liquid{position:absolute; left:0; right:0; bottom:0; height:58%; background:transparent; transition:background .45s ease}
+  .liquid::before{content:""; position:absolute; left:0; right:0; top:-3px; height:6px; background:inherit; filter:brightness(.94); border-radius:50%}
+  .sediment{position:absolute; left:0; right:0; bottom:0; height:0; transition:height .8s cubic-bezier(.3,1.1,.5,1); border-radius:50% 50% 0 0 / 22px 22px 0 0}
+  .bubble{position:absolute; bottom:6%; border-radius:50%; background:rgba(255,255,255,.92); box-shadow:0 0 0 1.5px rgba(16,60,72,.28)}
+  @keyframes rise{ to{ transform:translateY(-150px) scale(1.25); opacity:0 } }
+  @media (prefers-reduced-motion:reduce){ .bubble{animation:none!important} .sediment{transition:none} .liquid{transition:none} }
+
+  .observe{text-align:center; min-height:44px; max-width:34ch}
+  .observe .big{font-family:var(--serif); font-size:19px; line-height:1.25; display:block; text-wrap:balance}
+  .observe .sm{font-size:12.5px; color:var(--muted); display:block; margin-top:4px}
+  .btn{font:inherit; font-size:13px; font-weight:600; padding:9px 16px; border-radius:3px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+  .btn:disabled{opacity:.45; cursor:default}
+  .btn:disabled:hover{border-color:var(--line)}
+
+  .proto{padding:0}
+  .eq{padding:13px 16px; border-bottom:1px solid var(--line)}
+  .eq:last-child{border-bottom:0}
+  .eq .lbl{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:5px}
+  .eq .v{font-family:var(--mono); font-size:13.5px; line-height:1.55; overflow-x:auto; white-space:nowrap; padding-bottom:2px}
+  .eq.note .v{white-space:normal; font-family:var(--sans); font-size:12.5px; color:var(--muted)}
+  .eq .v.net{color:var(--accent); font-weight:500}
+  .placeholder{padding:22px 16px; color:var(--muted); font-size:13px}
+
+  /* ── вкладка: изомеры ── */
+  .iso{display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:16px; align-items:start}
+  @media (max-width:860px){ .iso{grid-template-columns:1fr} }
+  .targets{display:flex; gap:6px; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--line)}
+  .targets button{font:inherit; font-family:var(--mono); font-size:13px; padding:6px 12px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:3px; cursor:pointer}
+  .targets button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+  .targets button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  .board{position:relative; background:var(--surface-2); border-bottom:1px solid var(--line)}
+  .board svg{display:block; width:100%; height:auto; touch-action:manipulation}
+  .bond{stroke:var(--ink); stroke-width:2.6; stroke-linecap:round}
+  .node{fill:var(--surface); stroke:var(--ink); stroke-width:2.2; cursor:pointer}
+  .node.leafable:hover{stroke:var(--accent)}
+  .ghost{fill:var(--accent); opacity:.14; cursor:pointer}
+  .ghost:hover{opacity:.42}
+  .ghost-plus{stroke:var(--accent); stroke-width:2; pointer-events:none; opacity:.75}
+  .capnote{position:absolute; left:14px; bottom:10px; font-size:11.5px; color:var(--muted)}
+
+  .readout{display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; padding:13px 16px}
+  @media (max-width:520px){ .readout{grid-template-columns:1fr; gap:10px} }
+  .readout .formula{font-family:var(--mono); font-size:19px; font-weight:500}
+  .readout .nm{font-family:var(--serif); font-size:17px; line-height:1.2}
+  .readout .nm small{display:block; font-family:var(--sans); font-size:11.5px; color:var(--muted); font-weight:400; margin-top:2px}
+
+  .found{padding:8px; display:flex; flex-direction:column; gap:6px}
+  .found li{list-style:none; display:grid; grid-template-columns:62px 1fr; gap:10px; align-items:center; padding:7px 9px; border:1px solid var(--line); border-radius:3px; background:var(--surface-2)}
+  .found li.flash{border-color:var(--accent); background:var(--accent-soft)}
+  .found svg{display:block; width:100%; height:30px}
+  .found .nm2{font-size:13px; line-height:1.25}
+  .found .idx{font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .found li.empt{display:block; border:0; background:none; padding:14px 8px; color:var(--muted); font-size:13px}
+  .toast{padding:10px 16px; font-size:12.5px; border-top:1px solid var(--line); color:var(--muted); min-height:18px}
+  .toast.ok{color:var(--good)}
+  .toast.dup{color:var(--brown)}
+
+  .legend{margin-top:18px; font-size:12px; color:var(--muted); line-height:1.6}
+  .legend b{color:var(--ink); font-weight:600}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Практикум · 1 курс</p>
+      <h1>Реактивы и изомеры</h1>
+      <p class="sub">Слева — склянки с растворами: смешайте два и получите уравнение реакции в трёх формах. Справа — сборка углеродного скелета с проверкой по номенклатуре.</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-lab" aria-controls="p-lab" aria-selected="true">Неорганика</button>
+      <button role="tab" id="tab-iso" aria-controls="p-iso" aria-selected="false">Органика</button>
+    </div>
+  </header>
+
+  <!-- ══════════ ЛАБОРАТОРИЯ ══════════ -->
+  <section id="p-lab" role="tabpanel" aria-labelledby="tab-lab">
+    <div class="lab">
+      <div class="panel shelf-wrap">
+        <div class="panel-hd"><h2>Склянки</h2><span class="count" id="disc">0 / 18</span></div>
+        <div class="shelf" id="shelf"></div>
+      </div>
+
+      <div class="panel bench">
+        <div class="picked" id="picked"><span class="empty">Выберите два реактива на полке</span></div>
+        <div class="tube">
+          <div class="liquid" id="liquid"></div>
+          <div class="sediment" id="sediment"></div>
+          <div id="fx"></div>
+        </div>
+        <div class="observe" id="observe"><span class="sm">Пробирка пуста</span></div>
+        <button class="btn" id="reset">Вымыть пробирку</button>
+      </div>
+
+      <div class="panel proto">
+        <div class="panel-hd"><h2>Протокол</h2></div>
+        <div id="proto"><div class="placeholder">Уравнения появятся после смешивания.</div></div>
+      </div>
+    </div>
+    <p class="legend"><b>Правило обмена:</b> реакция между растворами идёт до конца, если образуется осадок, газ или малодиссоциирующее вещество (вода). Если ничего из этого нет — ионы остаются в растворе и реакции нет.</p>
+  </section>
+
+  <!-- ══════════ ИЗОМЕРЫ ══════════ -->
+  <section id="p-iso" role="tabpanel" aria-labelledby="tab-iso" hidden>
+    <div class="iso">
+      <div class="panel">
+        <div class="targets" id="targets"></div>
+        <div class="board">
+          <svg id="board" viewBox="0 0 640 340" aria-label="Поле сборки углеродного скелета"></svg>
+          <span class="capnote">Нажмите на подсвеченную точку, чтобы добавить атом углерода. Атом можно убрать, нажав на него.</span>
+        </div>
+        <div class="readout">
+          <span class="formula" id="formula">C₅H₁₂</span>
+          <span class="nm" id="iupac">пентан<small>неразветвлённый алкан</small></span>
+          <button class="btn primary" id="record">Записать в журнал</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><h2>Журнал изомеров</h2><span class="count" id="isoCount">0 / 3</span></div>
+        <ul class="found" id="found"></ul>
+        <div class="toast" id="toast">Соберите скелет и нажмите «Записать в журнал».</div>
+      </div>
+    </div>
+    <p class="legend"><b>Изомеры</b> — вещества с одинаковой молекулярной формулой, но разным строением. У алканов это разный порядок соединения атомов углерода: цепь можно разветвить, но нельзя замкнуть в цикл и нельзя дать атому углерода больше четырёх связей.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ════════════════ ЧАСТЬ 1. ЛАБОРАТОРИЯ ════════════════ */
+
+var REAGENTS = {
+  HCl:      {f:"HCl",      n:"соляная кислота",       c:"transparent", swatch:"#CFDAD7"},
+  H2SO4:    {f:"H₂SO₄",    n:"серная кислота",        c:"transparent", swatch:"#CFDAD7"},
+  NaOH:     {f:"NaOH",     n:"гидроксид натрия",      c:"transparent", swatch:"#CFDAD7"},
+  CuSO4:    {f:"CuSO₄",    n:"сульфат меди(II)",      c:"#5AB4DA",     swatch:"#3FA6D2"},
+  FeCl3:    {f:"FeCl₃",    n:"хлорид железа(III)",    c:"#D2924A",     swatch:"#C07B32"},
+  BaCl2:    {f:"BaCl₂",    n:"хлорид бария",          c:"transparent", swatch:"#CFDAD7"},
+  AgNO3:    {f:"AgNO₃",    n:"нитрат серебра",        c:"transparent", swatch:"#CFDAD7"},
+  Na2CO3:   {f:"Na₂CO₃",   n:"карбонат натрия",       c:"transparent", swatch:"#CFDAD7"},
+  PhPh:     {f:"фенолфт.", n:"фенолфталеин, индикатор", c:"transparent", swatch:"#D9C2CE"}
+};
+
+/* ключ — пара реактивов в алфавитном порядке */
+function key(a,b){ return [a,b].sort().join("+"); }
+
+var RX = {};
+function rx(a,b,o){ RX[key(a,b)] = o; }
+
+rx("NaOH","CuSO4",{
+  sign:"Выпал голубой студенистый осадок",
+  extra:"Гидроксид меди(II) нерастворим в воде",
+  liquid:"#DCE8EA", precip:"#6FC0E4",
+  mol:"2NaOH + CuSO₄ → Cu(OH)₂↓ + Na₂SO₄",
+  full:"2Na⁺ + 2OH⁻ + Cu²⁺ + SO₄²⁻ → Cu(OH)₂↓ + 2Na⁺ + SO₄²⁻",
+  net:"Cu²⁺ + 2OH⁻ → Cu(OH)₂↓"
+});
+rx("NaOH","FeCl3",{
+  sign:"Выпал бурый осадок",
+  extra:"Гидроксид железа(III) — качественный признак иона Fe³⁺",
+  liquid:"#E4DCD2", precip:"#A05A28",
+  mol:"3NaOH + FeCl₃ → Fe(OH)₃↓ + 3NaCl",
+  full:"3Na⁺ + 3OH⁻ + Fe³⁺ + 3Cl⁻ → Fe(OH)₃↓ + 3Na⁺ + 3Cl⁻",
+  net:"Fe³⁺ + 3OH⁻ → Fe(OH)₃↓"
+});
+rx("BaCl2","H2SO4",{
+  sign:"Выпал белый осадок",
+  extra:"Качественная реакция на сульфат-ион: BaSO₄ не растворяется даже в кислотах",
+  liquid:"#E8EDEC", precip:"#F2F4F3",
+  mol:"BaCl₂ + H₂SO₄ → BaSO₄↓ + 2HCl",
+  full:"Ba²⁺ + 2Cl⁻ + 2H⁺ + SO₄²⁻ → BaSO₄↓ + 2H⁺ + 2Cl⁻",
+  net:"Ba²⁺ + SO₄²⁻ → BaSO₄↓"
+});
+rx("BaCl2","CuSO4",{
+  sign:"Выпал белый осадок, раствор остался голубым",
+  extra:"Голубую окраску даёт ион Cu²⁺, оставшийся в растворе",
+  liquid:"#8FCBE4", precip:"#F2F4F3",
+  mol:"BaCl₂ + CuSO₄ → BaSO₄↓ + CuCl₂",
+  full:"Ba²⁺ + 2Cl⁻ + Cu²⁺ + SO₄²⁻ → BaSO₄↓ + Cu²⁺ + 2Cl⁻",
+  net:"Ba²⁺ + SO₄²⁻ → BaSO₄↓"
+});
+rx("AgNO3","HCl",{
+  sign:"Выпал белый творожистый осадок",
+  extra:"Качественная реакция на хлорид-ион; на свету AgCl темнеет",
+  liquid:"#E8EDEC", precip:"#EDEFEE",
+  mol:"AgNO₃ + HCl → AgCl↓ + HNO₃",
+  full:"Ag⁺ + NO₃⁻ + H⁺ + Cl⁻ → AgCl↓ + H⁺ + NO₃⁻",
+  net:"Ag⁺ + Cl⁻ → AgCl↓"
+});
+rx("AgNO3","BaCl2",{
+  sign:"Выпал белый творожистый осадок",
+  extra:"Хлорид-ион связывается ионом серебра",
+  liquid:"#E8EDEC", precip:"#EDEFEE",
+  mol:"2AgNO₃ + BaCl₂ → 2AgCl↓ + Ba(NO₃)₂",
+  full:"2Ag⁺ + 2NO₃⁻ + Ba²⁺ + 2Cl⁻ → 2AgCl↓ + Ba²⁺ + 2NO₃⁻",
+  net:"Ag⁺ + Cl⁻ → AgCl↓"
+});
+rx("AgNO3","FeCl3",{
+  sign:"Выпал белый осадок, раствор остался жёлто-бурым",
+  extra:"Окраску даёт ион Fe³⁺, оставшийся в растворе",
+  liquid:"#DCBE97", precip:"#EDEFEE",
+  mol:"3AgNO₃ + FeCl₃ → 3AgCl↓ + Fe(NO₃)₃",
+  full:"3Ag⁺ + 3NO₃⁻ + Fe³⁺ + 3Cl⁻ → 3AgCl↓ + Fe³⁺ + 3NO₃⁻",
+  net:"Ag⁺ + Cl⁻ → AgCl↓"
+});
+rx("AgNO3","Na2CO3",{
+  sign:"Выпал светло-жёлтый осадок",
+  extra:"Карбонат серебра нерастворим в воде",
+  liquid:"#E8EDEC", precip:"#E8DFA8",
+  mol:"2AgNO₃ + Na₂CO₃ → Ag₂CO₃↓ + 2NaNO₃",
+  full:"2Ag⁺ + 2NO₃⁻ + 2Na⁺ + CO₃²⁻ → Ag₂CO₃↓ + 2Na⁺ + 2NO₃⁻",
+  net:"2Ag⁺ + CO₃²⁻ → Ag₂CO₃↓"
+});
+rx("AgNO3","NaOH",{
+  sign:"Выпал бурый осадок",
+  extra:"Гидроксид серебра неустойчив и сразу распадается на оксид и воду",
+  liquid:"#E4DCD2", precip:"#8A6A4A",
+  mol:"2AgNO₃ + 2NaOH → Ag₂O↓ + 2NaNO₃ + H₂O",
+  full:"2Ag⁺ + 2NO₃⁻ + 2Na⁺ + 2OH⁻ → Ag₂O↓ + H₂O + 2Na⁺ + 2NO₃⁻",
+  net:"2Ag⁺ + 2OH⁻ → Ag₂O↓ + H₂O"
+});
+rx("Na2CO3","HCl",{
+  sign:"Бурное выделение газа без запаха",
+  extra:"Углекислый газ мутит известковую воду — так его и распознают",
+  liquid:"#E8EDEC", gas:true,
+  mol:"Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑",
+  full:"2Na⁺ + CO₃²⁻ + 2H⁺ + 2Cl⁻ → 2Na⁺ + 2Cl⁻ + H₂O + CO₂↑",
+  net:"CO₃²⁻ + 2H⁺ → H₂O + CO₂↑"
+});
+rx("Na2CO3","H2SO4",{
+  sign:"Бурное выделение газа без запаха",
+  extra:"Реакцию ведёт ион водорода, а не кислотный остаток",
+  liquid:"#E8EDEC", gas:true,
+  mol:"Na₂CO₃ + H₂SO₄ → Na₂SO₄ + H₂O + CO₂↑",
+  full:"2Na⁺ + CO₃²⁻ + 2H⁺ + SO₄²⁻ → 2Na⁺ + SO₄²⁻ + H₂O + CO₂↑",
+  net:"CO₃²⁻ + 2H⁺ → H₂O + CO₂↑"
+});
+rx("Na2CO3","BaCl2",{
+  sign:"Выпал белый осадок",
+  extra:"В отличие от BaSO₄, карбонат бария растворяется в кислотах с выделением CO₂",
+  liquid:"#E8EDEC", precip:"#F0F2F1",
+  mol:"Na₂CO₃ + BaCl₂ → BaCO₃↓ + 2NaCl",
+  full:"2Na⁺ + CO₃²⁻ + Ba²⁺ + 2Cl⁻ → BaCO₃↓ + 2Na⁺ + 2Cl⁻",
+  net:"Ba²⁺ + CO₃²⁻ → BaCO₃↓"
+});
+rx("Na2CO3","CuSO4",{
+  sign:"Выпал голубовато-зелёный осадок",
+  extra:"В школьном курсе продукт записывают как CuCO₃; на практике выпадает основный карбонат (CuOH)₂CO₃",
+  liquid:"#DCE8EA", precip:"#69B8A0",
+  mol:"Na₂CO₃ + CuSO₄ → CuCO₃↓ + Na₂SO₄",
+  full:"2Na⁺ + CO₃²⁻ + Cu²⁺ + SO₄²⁻ → CuCO₃↓ + 2Na⁺ + SO₄²⁻",
+  net:"Cu²⁺ + CO₃²⁻ → CuCO₃↓"
+});
+rx("NaOH","HCl",{
+  sign:"Видимых изменений нет — но реакция идёт",
+  extra:"Реакция нейтрализации: ионы связываются в воду. Убедиться можно индикатором",
+  liquid:"#E8EDEC",
+  mol:"NaOH + HCl → NaCl + H₂O",
+  full:"Na⁺ + OH⁻ + H⁺ + Cl⁻ → Na⁺ + Cl⁻ + H₂O",
+  net:"H⁺ + OH⁻ → H₂O"
+});
+rx("NaOH","H2SO4",{
+  sign:"Видимых изменений нет — но реакция идёт",
+  extra:"Вода — слабый электролит, поэтому обмен доходит до конца",
+  liquid:"#E8EDEC",
+  mol:"2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O",
+  full:"2Na⁺ + 2OH⁻ + 2H⁺ + SO₄²⁻ → 2Na⁺ + SO₄²⁻ + 2H₂O",
+  net:"H⁺ + OH⁻ → H₂O"
+});
+rx("PhPh","NaOH",{
+  sign:"Раствор стал малиновым",
+  extra:"Фенолфталеин малиновый в щелочной среде, pH > 7. Это не обмен, а окраска индикатора",
+  liquid:"#C74C86", indicator:true,
+  mol:"—  (реакция обмена не идёт)",
+  full:"В растворе избыток ионов OH⁻",
+  net:"Среда щелочная: pH > 7"
+});
+rx("PhPh","Na2CO3",{
+  sign:"Раствор стал малиновым",
+  extra:"Соль слабой кислоты и сильного основания гидролизуется по аниону — среда щелочная",
+  liquid:"#C9639A", indicator:true,
+  mol:"CO₃²⁻ + H₂O ⇄ HCO₃⁻ + OH⁻  (гидролиз)",
+  full:"Накапливаются ионы OH⁻",
+  net:"Среда щелочная: pH > 7"
+});
+
+rx("FeCl3","Na2CO3",{
+  sign:"Выпал бурый осадок и пошёл газ",
+  extra:"Взаимное усиление гидролиза: карбоната железа(III) в растворе не существует",
+  liquid:"#E4DCD2", precip:"#A05A28", gas:true,
+  mol:"2FeCl₃ + 3Na₂CO₃ + 3H₂O → 2Fe(OH)₃↓ + 3CO₂↑ + 6NaCl",
+  full:"2Fe³⁺ + 6Cl⁻ + 6Na⁺ + 3CO₃²⁻ + 3H₂O → 2Fe(OH)₃↓ + 3CO₂↑ + 6Na⁺ + 6Cl⁻",
+  net:"2Fe³⁺ + 3CO₃²⁻ + 3H₂O → 2Fe(OH)₃↓ + 3CO₂↑"
+});
+
+var NORX = {};
+NORX[key("HCl","H2SO4")]   = "Обе — кислоты. Между ними нечему обмениваться.";
+NORX[key("NaOH","Na2CO3")] = "У обоих веществ один и тот же катион Na⁺, осадок, газ или вода не образуются.";
+NORX[key("CuSO4","FeCl3")] = "Возможные продукты CuCl₂ и Fe₂(SO₄)₃ растворимы — ионы остаются в растворе.";
+NORX[key("BaCl2","NaOH")]  = "Ba(OH)₂ и NaCl растворимы, связывать ионы нечем.";
+NORX[key("BaCl2","HCl")]   = "Оба продукта растворимы, обмен не даёт ни осадка, ни газа.";
+NORX[key("CuSO4","HCl")]   = "CuCl₂ и H₂SO₄ остаются в растворе — реакция не идёт.";
+NORX[key("CuSO4","H2SO4")] = "Обмен не меняет состав раствора.";
+NORX[key("FeCl3","HCl")]   = "Одноимённый анион Cl⁻ — обмениваться нечем.";
+NORX[key("FeCl3","H2SO4")] = "Fe₂(SO₄)₃ растворим, осадок не выпадает.";
+NORX[key("FeCl3","BaCl2")] = "Оба продукта растворимы.";
+NORX[key("AgNO3","H2SO4")] = "Ag₂SO₄ малорастворим: заметный осадок выпадает лишь из концентрированных растворов.";
+NORX[key("AgNO3","CuSO4")] = "Ag₂SO₄ малорастворим: из разбавленных растворов заметный осадок не выпадает.";
+NORX[key("PhPh","HCl")]    = "В кислой среде фенолфталеин бесцветен, pH < 7.";
+NORX[key("PhPh","H2SO4")]  = "В кислой среде фенолфталеин бесцветен, pH < 7.";
+NORX[key("PhPh","CuSO4")]  = "Раствор сульфата меди слабокислый — окраски нет.";
+NORX[key("PhPh","FeCl3")]  = "Раствор хлорида железа(III) кислый из-за гидролиза — окраски нет.";
+NORX[key("PhPh","BaCl2")]  = "Среда нейтральная, фенолфталеин бесцветен.";
+NORX[key("PhPh","AgNO3")]  = "Раствор нитрата серебра слабокислый — фенолфталеин бесцветен.";
+
+var TOTAL = Object.keys(RX).length;
+var picked = [], discovered = {};
+
+var $ = function(id){ return document.getElementById(id); };
+var shelf=$("shelf"), pickedEl=$("picked"), liquid=$("liquid"),
+    sediment=$("sediment"), fx=$("fx"), observe=$("observe"), proto=$("proto"), disc=$("disc");
+
+disc.textContent = "0 / " + TOTAL;
+
+Object.keys(REAGENTS).forEach(function(id){
+  var r = REAGENTS[id];
+  var b = document.createElement("button");
+  b.className = "bottle"; b.dataset.id = id;
+  b.innerHTML = '<span class="swatch" style="background:'+r.swatch+'"></span>' +
+                '<span><span class="f">'+r.f+'</span><br><span class="n">'+r.n+'</span></span>' +
+                '<span class="slot"></span>';
+  b.addEventListener("click", function(){ pick(id); });
+  shelf.appendChild(b);
+});
+
+function pick(id){
+  var i = picked.indexOf(id);
+  if(i > -1){ picked.splice(i,1); }
+  else if(picked.length < 2){ picked.push(id); }
+  else { picked = [picked[1], id]; }
+  render();
+}
+
+function render(){
+  Array.prototype.forEach.call(shelf.children, function(b){
+    var i = picked.indexOf(b.dataset.id);
+    b.dataset.on = i > -1 ? "1" : "0";
+    b.querySelector(".slot").textContent = i > -1 ? (i===0 ? "A" : "B") : "";
+  });
+
+  if(!picked.length){
+    pickedEl.innerHTML = '<span class="empty">Выберите два реактива на полке</span>';
+  } else {
+    pickedEl.innerHTML = picked.map(function(p){
+      return '<span>'+REAGENTS[p].f+'</span>';
+    }).join('<span class="plus">+</span>');
+  }
+
+  fx.innerHTML = "";
+  sediment.style.height = "0";
+
+  if(picked.length < 2){
+    liquid.style.background = picked.length ? (REAGENTS[picked[0]].c === "transparent" ? "#E8EDEC" : REAGENTS[picked[0]].c) : "transparent";
+    observe.innerHTML = picked.length
+      ? '<span class="sm">Добавьте второй реактив</span>'
+      : '<span class="sm">Пробирка пуста</span>';
+    proto.innerHTML = '<div class="placeholder">Уравнения появятся после смешивания.</div>';
+    return;
+  }
+
+  var k = key(picked[0], picked[1]);
+  var r = RX[k];
+
+  if(!r){
+    liquid.style.background = "#E8EDEC";
+    observe.innerHTML = '<span class="big">Реакция не идёт</span><span class="sm">Признаков нет: ни осадка, ни газа, ни воды</span>';
+    var why = NORX[k] || "Ни один из возможных продуктов не выпадает в осадок, не улетает газом и не является слабым электролитом.";
+    proto.innerHTML = '<div class="eq note"><div class="lbl">Почему</div><div class="v">'+why+'</div></div>' +
+      '<div class="eq"><div class="lbl">Вывод</div><div class="v net">Реакция обмена не протекает</div></div>';
+    return;
+  }
+
+  if(!discovered[k]){
+    discovered[k] = 1;
+    disc.textContent = Object.keys(discovered).length + " / " + TOTAL;
+  }
+
+  liquid.style.background = r.liquid || "#E8EDEC";
+  if(r.precip){
+    sediment.style.background = r.precip;
+    requestAnimationFrame(function(){ sediment.style.height = "16%"; });
+  }
+  if(r.gas){ bubbles(); }
+
+  observe.innerHTML = '<span class="big">'+r.sign+'</span><span class="sm">'+r.extra+'</span>';
+
+  proto.innerHTML =
+    '<div class="eq"><div class="lbl">Молекулярное уравнение</div><div class="v">'+r.mol+'</div></div>' +
+    '<div class="eq"><div class="lbl">Полное ионное</div><div class="v">'+r.full+'</div></div>' +
+    '<div class="eq"><div class="lbl">'+(r.indicator ? "Среда" : "Сокращённое ионное")+'</div><div class="v net">'+r.net+'</div></div>';
+}
+
+function bubbles(){
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce) return;
+  for(var i=0;i<16;i++){
+    var s = document.createElement("span");
+    var d = 5 + Math.random()*7;
+    s.className = "bubble";
+    s.style.width = s.style.height = d + "px";
+    s.style.left = (12 + Math.random()*72) + "%";
+    s.style.animation = "rise " + (1.1 + Math.random()*1.3) + "s linear " + (Math.random()*1.6) + "s infinite";
+    fx.appendChild(s);
+  }
+}
+
+$("reset").addEventListener("click", function(){ picked = []; render(); });
+
+/* демонстрационное состояние при открытии */
+picked = ["NaOH","CuSO4"];
+render();
+
+
+/* ════════════════ ЧАСТЬ 2. ИЗОМЕРЫ ════════════════ */
+
+var DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+var STEP = 44;
+var ROOTS = ["","метан","этан","пропан","бутан","пентан","гексан","гептан","октан"];
+var MULT  = ["","","ди","три","тетра"];
+var SUBN  = {1:"метил", 2:"этил", 3:"пропил", 4:"бутил"};
+var TARGETS = [
+  {n:4, f:"C₄H₁₀", total:2},
+  {n:5, f:"C₅H₁₂", total:3},
+  {n:6, f:"C₆H₁₄", total:5},
+  {n:7, f:"C₇H₁₆", total:9}
+];
+
+var target = TARGETS[1];
+var atoms = [];               // [{q,r}]
+var found = {};               // target.n -> { canon: {name, atoms} }
+
+var boardEl=$("board"), formulaEl=$("formula"), iupacEl=$("iupac"),
+    foundEl=$("found"), toastEl=$("toast"), isoCount=$("isoCount"), recordBtn=$("record");
+
+TARGETS.forEach(function(t){
+  var b = document.createElement("button");
+  b.textContent = t.f;
+  b.addEventListener("click", function(){ setTarget(t); });
+  b.dataset.n = t.n;
+  $("targets").appendChild(b);
+});
+
+function setTarget(t){
+  target = t;
+  atoms = chainOf(t.n);
+  Array.prototype.forEach.call($("targets").children, function(b){
+    b.setAttribute("aria-pressed", (+b.dataset.n === t.n) ? "true" : "false");
+  });
+  toast("Соберите скелет и нажмите «Записать в журнал».","");
+  draw();
+}
+
+/* Связи задаются явно (поле p — родитель), а не по соседству на решётке:
+   иначе зигзаг под 120° давал бы ложные циклы. */
+function chainOf(n){
+  var a = [{q:0, r:0, p:-1}];
+  for(var i=1;i<n;i++){
+    var d = (i % 2 === 1) ? [1,-1] : [0,1];
+    a.push({q:a[i-1].q + d[0], r:a[i-1].r + d[1], p:i-1});
+  }
+  return a;
+}
+
+function occupied(){ var m = {}; atoms.forEach(function(a,i){ m[a.q + "," + a.r] = i; }); return m; }
+
+function adjacency(){
+  var adj = atoms.map(function(){ return []; });
+  atoms.forEach(function(a,i){
+    if(a.p >= 0){ adj[i].push(a.p); adj[a.p].push(i); }
+  });
+  return adj;
+}
+
+function ghosts(){
+  if(atoms.length >= target.n) return [];
+  var m = occupied(), adj = adjacency(), seen = {}, out = [];
+  atoms.forEach(function(a,i){
+    if(adj[i].length >= 4) return;
+    DIRS.forEach(function(d){
+      var q = a.q + d[0], r = a.r + d[1], k = q + "," + r;
+      if(m[k] !== undefined || seen[k]) return;
+      seen[k] = 1;
+      out.push({q:q, r:r, p:i});
+    });
+  });
+  return out;
+}
+
+/* убрать можно только концевой атом — тот, у которого нет потомков */
+function removable(){
+  var kids = atoms.map(function(){ return 0; });
+  atoms.forEach(function(a){ if(a.p >= 0) kids[a.p]++; });
+  return atoms.map(function(_,i){ return atoms.length > 1 && kids[i] === 0; });
+}
+
+function removeAtom(i){
+  atoms.splice(i,1);
+  atoms.forEach(function(a){ if(a.p > i) a.p--; });
+}
+
+function draw(){
+  var pts = atoms.map(function(a){ return [(a.q + a.r/2)*STEP, a.r*(Math.sqrt(3)/2)*STEP]; });
+  var gs  = ghosts();
+  var gpts= gs.map(function(a){ return [(a.q + a.r/2)*STEP, a.r*(Math.sqrt(3)/2)*STEP]; });
+  var all = pts.concat(gpts);
+  var pad = 46;
+  var xs = all.map(function(p){ return p[0]; }), ys = all.map(function(p){ return p[1]; });
+  var minX = Math.min.apply(null,xs)-pad, maxX = Math.max.apply(null,xs)+pad;
+  var minY = Math.min.apply(null,ys)-pad, maxY = Math.max.apply(null,ys)+pad;
+  var w = Math.max(maxX-minX, 420), h = Math.max(maxY-minY, 250);
+  var cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+  boardEl.setAttribute("viewBox", (cx-w/2)+" "+(cy-h/2)+" "+w+" "+h);
+
+  var rem = removable(), svg = "";
+  atoms.forEach(function(a,i){
+    if(a.p >= 0)
+      svg += '<line class="bond" x1="'+pts[i][0]+'" y1="'+pts[i][1]+'" x2="'+pts[a.p][0]+'" y2="'+pts[a.p][1]+'"/>';
+  });
+  gpts.forEach(function(p,i){
+    svg += '<g data-g="'+i+'"><circle class="ghost" cx="'+p[0]+'" cy="'+p[1]+'" r="15"/>' +
+           '<path class="ghost-plus" d="M'+(p[0]-6)+' '+p[1]+'h12M'+p[0]+' '+(p[1]-6)+'v12" fill="none"/></g>';
+  });
+  pts.forEach(function(p,i){
+    svg += '<circle class="node'+(rem[i] ? " leafable" : "")+'" data-a="'+i+'" cx="'+p[0]+'" cy="'+p[1]+'" r="7.5"/>';
+  });
+  boardEl.innerHTML = svg;
+
+  boardEl.querySelectorAll("[data-g]").forEach(function(g){
+    g.addEventListener("click", function(){
+      atoms.push(gs[+g.dataset.g]); draw();
+    });
+  });
+  boardEl.querySelectorAll("[data-a]").forEach(function(c){
+    c.addEventListener("click", function(){
+      var i = +c.dataset.a;
+      if(removable()[i]){ removeAtom(i); draw(); }
+    });
+  });
+
+  var n = atoms.length;
+  formulaEl.textContent = "C" + sub(n) + "H" + sub(2*n+2);
+  var full = n === target.n;
+  if(full){
+    var nm = nameAlkane(adjacency());
+    iupacEl.innerHTML = nm.name + "<small>" + nm.kind + "</small>";
+  } else {
+    iupacEl.innerHTML = "—<small>осталось добавить: " + (target.n - n) + "</small>";
+  }
+  recordBtn.disabled = !full;
+  renderFound();
+}
+
+function sub(num){
+  var map = {"0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉"};
+  return String(num).split("").map(function(d){ return map[d]; }).join("");
+}
+
+/* ── канонический вид дерева (алгоритм AHU) ── */
+function canonical(adj){
+  var n = adj.length;
+  if(n === 1) return "()";
+  var deg = adj.map(function(a){ return a.length; });
+  var removed = new Array(n).fill(false), left = n, leaves = [];
+  for(var i=0;i<n;i++) if(deg[i] <= 1) leaves.push(i);
+  while(left > 2){
+    var next = [];
+    leaves.forEach(function(l){
+      removed[l] = true; left--;
+      adj[l].forEach(function(nb){ if(!removed[nb] && --deg[nb] === 1) next.push(nb); });
+    });
+    leaves = next;
+  }
+  var centers = [];
+  for(var j=0;j<n;j++) if(!removed[j]) centers.push(j);
+  return centers.map(function(c){ return rooted(adj,c,-1); }).sort().join("|");
+}
+function rooted(adj,v,p){
+  return "(" + adj[v].filter(function(x){ return x !== p; })
+                     .map(function(x){ return rooted(adj,x,v); }).sort().join("") + ")";
+}
+
+/* ── название по номенклатуре ИЮПАК ── */
+function pathBetween(adj,a,b){
+  var prev = {}, seen = {}, q = [a];
+  seen[a] = 1; prev[a] = -1;
+  while(q.length){
+    var v = q.shift();
+    if(v === b) break;
+    adj[v].forEach(function(nb){ if(!seen[nb]){ seen[nb]=1; prev[nb]=v; q.push(nb); } });
+  }
+  var path = [], cur = b;
+  while(cur !== -1){ path.push(cur); cur = prev[cur]; }
+  return path.reverse();
+}
+function cmpLoc(a,b){
+  for(var i=0;i<Math.max(a.length,b.length);i++){
+    var x = a[i] === undefined ? 99 : a[i], y = b[i] === undefined ? 99 : b[i];
+    if(x !== y) return x - y;
+  }
+  return 0;
+}
+function branchInfo(adj,root,parent){
+  var size = 0, stack = [[root,parent]], rootKids = 0;
+  while(stack.length){
+    var cur = stack.pop(), v = cur[0], p = cur[1];
+    size++;
+    adj[v].forEach(function(nb){ if(nb !== p){ stack.push([nb,v]); if(v === root) rootKids++; } });
+  }
+  return {size:size, rootKids:rootKids};
+}
+function nameAlkane(adj){
+  var n = adj.length;
+  if(n === 1) return {name:"метан", kind:"простейший алкан"};
+
+  var paths = [];
+  for(var i=0;i<n;i++) for(var j=i+1;j<n;j++) paths.push(pathBetween(adj,i,j));
+  var maxLen = Math.max.apply(null, paths.map(function(p){ return p.length; }));
+  var longest = paths.filter(function(p){ return p.length === maxLen; });
+
+  var best = null;
+  longest.forEach(function(chain){
+    var inChain = {}; chain.forEach(function(c){ inChain[c] = 1; });
+    var subs = [];
+    chain.forEach(function(c,idx){
+      adj[c].forEach(function(nb){ if(!inChain[nb]) subs.push({at:idx, root:nb, parent:c}); });
+    });
+    [0,1].forEach(function(dir){
+      var locs = subs.map(function(s){ return dir === 0 ? s.at+1 : chain.length - s.at; }).sort(function(a,b){ return a-b; });
+      var cand = {chain:chain, dir:dir, subs:subs, locs:locs, count:subs.length};
+      if(!best || cand.count > best.count || (cand.count === best.count && cmpLoc(cand.locs,best.locs) < 0)) best = cand;
+    });
+  });
+
+  var groups = {};
+  best.subs.forEach(function(s){
+    var b = branchInfo(adj, s.root, s.parent);
+    var nm = SUBN[b.size] || "алкил";
+    if(b.size === 3 && b.rootKids === 2) nm = "изопропил";
+    var loc = best.dir === 0 ? s.at+1 : best.chain.length - s.at;
+    (groups[nm] = groups[nm] || []).push(loc);
+  });
+
+  var names = Object.keys(groups).sort(function(a,b){ return a.localeCompare(b,"ru"); });
+  var parts = names.map(function(nm){
+    var l = groups[nm].sort(function(a,b){ return a-b; });
+    return l.join(",") + "-" + (MULT[l.length] || "") + nm;
+  });
+  var root = ROOTS[best.chain.length];
+  var name = parts.length ? parts.join("-") + root : root;
+
+  var kind = parts.length
+    ? "разветвлённый алкан, главная цепь — " + best.chain.length + " C"
+    : "неразветвлённый алкан";
+  return {name:name, kind:kind};
+}
+
+/* ── журнал ── */
+function toast(msg, cls){ toastEl.textContent = msg; toastEl.className = "toast " + (cls || ""); }
+
+recordBtn.addEventListener("click", function(){
+  if(atoms.length !== target.n) return;
+  var adj = adjacency(), c = canonical(adj);
+  found[target.n] = found[target.n] || {};
+  if(found[target.n][c]){
+    toast("Такой изомер уже записан — попробуйте другое строение.","dup");
+    flash(c);
+    return;
+  }
+  var nm = nameAlkane(adj);
+  found[target.n][c] = {name:nm.name, atoms:atoms.map(function(a){ return {q:a.q, r:a.r, p:a.p}; })};
+  var have = Object.keys(found[target.n]).length;
+  toast(have === target.total
+      ? "Все " + target.total + " изомера " + target.f + " собраны."
+      : "Записано: " + nm.name + ". Осталось найти " + (target.total - have) + ".", "ok");
+  renderFound();
+  flash(c);
+});
+
+function flash(c){
+  var li = foundEl.querySelector('[data-c="' + cssEsc(c) + '"]');
+  if(!li) return;
+  li.classList.add("flash");
+  setTimeout(function(){ li.classList.remove("flash"); }, 900);
+}
+function cssEsc(s){ return s.replace(/["\\]/g, "\\$&"); }
+
+function renderFound(){
+  var f = found[target.n] || {}, keys = Object.keys(f);
+  isoCount.textContent = keys.length + " / " + target.total;
+  if(!keys.length){
+    foundEl.innerHTML = '<li class="empt">Пока пусто. Соберите скелет из ' + target.n + ' атомов углерода.</li>';
+    return;
+  }
+  foundEl.innerHTML = keys.map(function(c,i){
+    return '<li data-c="' + c.replace(/"/g,"&quot;") + '">' +
+      mini(f[c].atoms) +
+      '<span><span class="idx">' + (i+1) + '</span> <span class="nm2">' + f[c].name + '</span></span></li>';
+  }).join("");
+}
+
+function mini(as){
+  var pts = as.map(function(a){ return [(a.q + a.r/2)*STEP, a.r*(Math.sqrt(3)/2)*STEP]; });
+  var lines = "";
+  as.forEach(function(a,i){
+    if(a.p >= 0)
+      lines += '<line x1="'+pts[i][0]+'" y1="'+pts[i][1]+'" x2="'+pts[a.p][0]+'" y2="'+pts[a.p][1]+'" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>';
+  });
+  var xs = pts.map(function(p){ return p[0]; }), ys = pts.map(function(p){ return p[1]; });
+  var pad = 10;
+  var minX = Math.min.apply(null,xs)-pad, maxX = Math.max.apply(null,xs)+pad;
+  var minY = Math.min.apply(null,ys)-pad, maxY = Math.max.apply(null,ys)+pad;
+  return '<svg viewBox="'+minX+' '+minY+' '+(maxX-minX)+' '+(maxY-minY)+'" preserveAspectRatio="xMidYMid meet">'+lines+'</svg>';
+}
+
+setTarget(TARGETS[1]);
+
+
+/* ════════════════ ВКЛАДКИ ════════════════ */
+var tabs = [$("tab-lab"), $("tab-iso")], panels = [$("p-lab"), $("p-iso")];
+tabs.forEach(function(t,i){
+  t.addEventListener("click", function(){
+    tabs.forEach(function(x,j){
+      x.setAttribute("aria-selected", i === j ? "true" : "false");
+      panels[j].hidden = i !== j;
+    });
+    if(i === 1) draw();
+  });
+});
+})();
+</script>
